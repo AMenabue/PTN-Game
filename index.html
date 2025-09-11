@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gioco Indovina la Canzone</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <h2>Indovina la canzone!</h2>
+    <pre id="frase"></pre>
+    <input type="text" id="guess" placeholder="Scrivi il titolo della canzone">
+    <button onclick="checkGuess()">Prova</button>
+    <p id="message"></p>
+
+    <script>
+        let canzoni = [];
+        let canzoneSelezionata = null;
+        let bloccoSelezionato = [];
+        let paroleBarre = [];
+        let paroleVisibili = [];
+
+        // Carica il JSON con fetch
+        fetch("canzoni.json")
+            .then(response => response.json())
+            .then(data => {
+                canzoni = data;
+                iniziaGioco();
+            })
+            .catch(err => {
+                document.getElementById("message").innerText = "Errore nel caricamento delle canzoni: " + err;
+            });
+
+        function iniziaGioco() {
+            // Scegli una canzone a caso
+            canzoneSelezionata = canzoni[Math.floor(Math.random() * canzoni.length)];
+
+            // Scegli un blocco a caso della canzone
+            bloccoSelezionato = canzoneSelezionata.blocchi[Math.floor(Math.random() * canzoneSelezionata.blocchi.length)];
+
+            // Trasforma le barre in array di parole
+            paroleBarre = bloccoSelezionato.map(barra => barra.split(" "));
+            paroleVisibili = paroleBarre.map(arr => arr.map(() => false));
+
+            // Mostra una parola a caso all'inizio
+            let totaleParole = paroleBarre.flat().length;
+            let parolaRandom = Math.floor(Math.random() * totaleParole);
+
+            let counter = 0;
+            let trovata = false;
+            for (let i = 0; i < paroleBarre.length; i++) {
+                for (let j = 0; j < paroleBarre[i].length; j++) {
+                    if (counter === parolaRandom) {
+                        paroleVisibili[i][j] = true;
+                        trovata = true;
+                        break;
+                    }
+                    counter++;
+                }
+                if (trovata) break;
+            }
+
+            document.getElementById("frase").innerText = generaFrase();
+            document.getElementById("message").innerText = "";
+        }
+
+        function generaFrase() {
+            return paroleBarre.map((barra, i) =>
+                barra.map((p, j) => paroleVisibili[i][j] ? p : "█".repeat(p.length)).join(" ")
+            ).join("\n");
+        }
+
+        function checkGuess() {
+            let guess = document.getElementById("guess").value.trim();
+
+            if (guess.toLowerCase() === canzoneSelezionata.titolo.toLowerCase()) {
+                document.getElementById("frase").innerText = bloccoSelezionato.join("\n");
+                document.getElementById("message").innerText = "Complimenti! Hai indovinato!";
+            } else {
+                // Sblocca un'altra parola a caso
+                let nascosta = [];
+                paroleVisibili.forEach((barra, i) => {
+                    barra.forEach((vis, j) => {
+                        if (!vis) nascosta.push([i,j]);
+                    });
+                });
+
+                if (nascosta.length > 0) {
+                    let [i,j] = nascosta[Math.floor(Math.random() * nascosta.length)];
+                    paroleVisibili[i][j] = true;
+                }
+
+                document.getElementById("frase").innerText = generaFrase();
+                document.getElementById("message").innerText = "Sbagliato! Ecco un altro indizio.";
+            }
+
+            document.getElementById("guess").value = "";
+        }
+    </script>
+</body>
+</html>
