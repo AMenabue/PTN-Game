@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PTN GAME</title>
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<link href="https://fonts.googleapis.com/css2?family=Tiny5&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans+Code&display=swap" rel="stylesheet">
+
+<style>
+/* Reset e base */
+* {margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', Tahoma, sans-serif;}
+body {display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; color:#333;}
+h1,h2,h3,p {text-align:center;}
+button {cursor:pointer; border:none; border-radius:5px; padding:10px 20px; font-size:1rem; transition:0.2s; background:#333; color:#fff;}
+input {padding:10px; font-size:1rem; border-radius:5px; border:1px solid #ccc; width:80%; max-width:400px; margin:10px auto; display:block;}
+pre {background:#e0e0e0; padding:10px; border-radius:5px; max-width:90%; word-wrap:break-word; white-space:pre-wrap; font-size:1rem;}
+
+/* Splash page */
+#splash {
+	display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; width:100%; text-align:center; background-color:#FCFCFB;
+}
+#splash p {
+    font-family: 'Google Sans Code', sans-serif;
+    font-size:1rem;
+    max-width:320px;
+    margin:0 auto 20px auto;
+    line-height:1.4;
+}
+#splash h1 {
+    font-family: 'Tiny5', sans-serif;
+    font-weight:bold;
+    font-size:3rem;
+    margin-bottom:0.5rem;
+    text-align:center;
+}
+#splash img {width:150px; height:auto; margin-bottom:20px;}
+#splash button {
+    font-size:1.2rem;
+    padding:16px 64px;
+    border-radius:999px;
+    font-weight:500;
+    background:#000;
+    color:#fff;
+    margin-top:4px;
+    margin-bottom:24px;
+}
+#splash small {
+    display:block;
+    margin-top:32px;
+    font-size:16px;
+    color:#000;
+}
+#splash small span:first-child {font-weight:500;}
+
+/* Game page */
+#game {
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    width:100%;
+    padding:20px;
+    max-width:500px;
+    background-color:#fff;
+}
+
+#game h2 {
+    margin-top: 20px; 
+    margin-bottom: 16px; 
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+#tentativi {
+    font-weight: 500; /* più bold, come la data nella splash page */
+    font-size: 16px;
+    color: #000;
+    margin-top: 10px;
+}
+
+#message {
+    font-weight: 400; /* meno bold rispetto a #tentativi */
+    font-size: 16px;
+    color: #000;
+    margin-top: 10px;
+}
+
+/* Stats button */
+#statsBtn {position:absolute; top:15px; right:15px; background:none; padding:5px;}
+#statsBtn img {width:30px; height:30px;}
+
+/* Modal */
+#modal {
+    display: none;
+    position: fixed;
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    background: rgba(0,0,0,0.4); 
+    align-items: center; 
+    justify-content: center;
+}
+
+#modalContent {
+    background: #fff; 
+    padding: 20px 20px 30px 20px; 
+    border-radius: 10px; 
+    max-width: 90%; 
+    width: 300px; 
+    text-align: center; 
+    position: relative;
+}
+
+#closeModal {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer; 
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width:600px){
+    pre {font-size:0.9rem;}
+    button {font-size:1rem; padding:10px 20px;}
+    #statsBtn img {width:25px; height:25px;}
+}
+
+/* Frase del gioco */
+#frase {
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    max-width: 90%;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+/* Contenuto modale */
+#modalContent, #modalText {
+    background-color: #fff;
+}
+
+/* Statistiche principali */
+#statsSummary {
+    display: flex;
+    justify-content: space-between;
+    margin: 20px 0 20px 0; /* più spazio sopra e sotto */
+}
+
+.statItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 22%;
+}
+
+.statNumber {
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+.statLabel {
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-top: 4px;
+    text-align: center;
+    text-transform: capitalize; /* Giocate, % Vittorie, etc. */
+}
+
+/* Distribuzione tentativi */
+#distributionTitle {
+    font-weight: 600;
+    font-size: 1rem;
+    margin: 20px 0 10px 0; /* spazio sopra come tra STATISTICHE e valori */
+    text-align: center;
+    text-transform: uppercase; /* DISTRIBUZIONE TENTATIVI */
+}
+
+.distributionRow {
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.distributionLabel {
+    width: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.distributionBarContainer {
+    flex: 1;
+    background: transparent;
+    border-radius: 4px;
+    margin-left: 6px;
+    position: relative;
+    height: 18px;
+}
+
+.distributionBar {
+    height: 100%;
+    border-radius: 4px;
+    background-color: #ccc;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding-right: 4px;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.distributionBar.current {
+    background-color: #8338ec;
+}
+
+/* Bottoni */
+.btn-large {
+    font-size: 1.2rem;
+    padding: 16px 48px;
+    border-radius: 999px;
+    font-weight: 600;
+    margin-top: 8px;
+    margin-bottom: 24px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-black {
+    background: #000;
+    color: #fff;
+}
+
+.btn-prova {
+    background: #8338ec;
+    color: #fff;
+}
+
+#modalTitle {
+    margin-bottom: 20px; /* aumenta lo spazio tra titolo e 4 valori */
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+</style>
+
+</head>
+<body>
+
+<!-- Splash page -->
+<div id="splash">
+    <img src="Logo.svg" alt="PTN Logo">
+    <h1>PTN GAME</h1>
+    <p>Hai 6 tentativi per indovinare<br>una canzone dei PTN</p>
+    <button id="startBtn" class="btn-large btn-black">Gioca</button>
+    <small>
+  	<span id="today"></span><br>
+  	<span id="dayNumber"></span><br>
+  	<span>Creato da Alessandro Menabue</span>
+    </small>
+</div>
+
+<!-- Game page -->
+<div id="game">
+    <button id="statsBtn"><img src="Stats.svg" alt="Stats"></button>
+    <h2>Indovina la canzone!</h2>
+    <pre id="frase"></pre>
+    <input type="text" id="guess" placeholder="Scrivi il titolo della canzone">
+    <button onclick="checkGuess()" class="btn-large btn-prova">Prova</button>
+    <p id="tentativi">Tentativo: 1</p>
+    <p id="message"></p>
+</div>
+
+<!-- Modal statistiche -->
+<div id="modal">
+    <div id="modalContent">
+    <h2 id="modalTitle">STATISTICHE</h2>
+    <span id="closeModal">&times;</span>
+
+    <!-- Riepilogo principale -->
+    <div id="statsSummary">
+        <div class="statItem">
+            <div class="statNumber" id="playedNum">0</div>
+            <div class="statLabel">Giocate</div>
+        </div>
+        <div class="statItem">
+            <div class="statNumber" id="winPerc">0%</div>
+            <div class="statLabel">Vittorie</div>
+        </div>
+        <div class="statItem">
+            <div class="statNumber" id="currentStreakNum">0</div>
+            <div class="statLabel">Streak Attuale</div>
+        </div>
+        <div class="statItem">
+            <div class="statNumber" id="maxStreakNum">0</div>
+            <div class="statLabel">Streak Massima</div>
+        </div>
+    </div>
+
+    <!-- Distribuzione tentativi -->
+    <h3 id="distributionTitle">DISTRIBUZIONE TENTATIVI</h3>
+    <div id="distributionBars"></div>
+</div>
+
+<script>
+let canzoni = [];
+let canzoneSelezionata = null;
+let bloccoSelezionato = [];
+let paroleBarre = [];
+let paroleVisibili = [];
+let tentativi = 1; 
+let maxTentativi = 6;
+let giocoFinito = false; 
+let sequenzaParole = [];
+const sameForAll = true; // False: Random per test
+const oggi = new Date().toISOString().slice(0,10);
+
+// Statistiche
+let stats = JSON.parse(localStorage.getItem("pinguini_stats")) || {
+    played: 0, wins: 0, currentStreak:0, maxStreak:0, lastWinDate:null, guessDistribution:{1:0,2:0,3:0,4:0,5:0,6:0}
+};
+
+// Reset stats e giochi salvati
+window.resetStats = function() {
+    localStorage.removeItem("pinguini_stats");
+    for(let key in localStorage){ if(key.startsWith("giocato_")) localStorage.removeItem(key);}
+    stats = {played:0,wins:0,currentStreak:0,maxStreak:0,lastWinDate:null,guessDistribution:{1:0,2:0,3:0,4:0,5:0,6:0}};
+    alert("Statistiche resettate!");
+    location.reload();
+}
+
+// Modal
+const modal = document.getElementById("modal");
+const modalText = document.getElementById("modalText");
+
+// Mostra modale con statistiche
+document.getElementById("statsBtn").onclick = () => {
+    showStatsModal();
+    modal.style.display = "flex";
+    modal.style.background = "rgba(0,0,0,0.4)"; // sfondo semitrasparente scuro
+    modalText.parentElement.style.backgroundColor = "#fff"; // finestra bianca
+};
+
+// Chiudi modale al click sulla X
+document.getElementById("closeModal").onclick = () => {
+    modal.style.display = "none";
+};
+
+// Chiudi modale cliccando fuori dal contenuto
+window.onclick = e => {
+    if(e.target == modal) modal.style.display = "none";
+};
+
+
+// Hash e shuffle deterministico
+function hashString(str){let hash=0;for(let i=0;i<str.length;i++){hash=((hash<<5)-hash)+str.charCodeAt(i);hash|=0;}return hash;}
+
+// Shuffle deterministico robusto: accetta seed opzionale.
+// Se seed è undefined usa Math.random() (non-deterministico).
+function shuffleArray(array, seed) {
+    // copia
+    const arr = array.slice();
+
+    // Normalizza il seed: se non fornito -> usa Math.random()
+    let useLCG = (typeof seed !== "undefined" && seed !== null);
+    // se c'è seed, rendilo un intero positivo nell'intervallo [0,233279]
+    if (useLCG) {
+        seed = Number(seed) || 0;
+        seed = ((seed % 233280) + 233280) % 233280; // ora in [0,233279]
+    }
+
+    for (let i = arr.length - 1; i > 0; i--) {
+        let j;
+        if (useLCG) {
+            // LCG coerente (stessa formula, ma seed mantenuto positivo)
+            seed = (seed * 9301 + 49297) % 233280;
+            j = Math.floor((seed / 233280) * (i + 1));
+        } else {
+            j = Math.floor(Math.random() * (i + 1));
+        }
+        // j è ora sempre un indice valido 0..i
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+// Ricostruisce la sequenza di indici (i,j) in modo coerente
+function recomputeSequenza() {
+    let flatIndices = [];
+    paroleBarre.forEach((b, i) => b.forEach((_, j) => flatIndices.push([i, j])));
+
+    let seedSequenza = sameForAll ? hashString(oggi + "_seq") : Math.floor(Math.random() * 100000);
+    let shuffled = shuffleArray(flatIndices, seedSequenza);
+
+    // Filtro di sicurezza: mantieni solo coppie valide [i,j]
+    sequenzaParole = shuffled.filter(p => Array.isArray(p) && p.length === 2
+        && Number.isInteger(p[0]) && Number.isInteger(p[1]));
+}
+
+
+// Carica canzoni e start
+fetch("canzoni.json").then(r=>r.json()).then(data=>{
+    canzoni=data;
+    document.getElementById("startBtn").onclick=()=>{
+        document.getElementById("splash").style.display="none";
+        document.getElementById("game").style.display="flex";
+        iniziaGioco();
+    }
+    document.getElementById("guess").addEventListener("keydown", e=>{if(e.key==="Enter") checkGuess();});
+}).catch(err=>{alert("Errore caricamento canzoni: "+err);});
+
+// Inizia gioco
+function iniziaGioco(){
+    // Pulisce automaticamente i salvataggi dei giorni vecchi
+    for (let key in localStorage) {
+        if (key.startsWith("giocato_") && key !== "giocato_" + oggi) {
+            localStorage.removeItem(key);
+        }
+    }
+
+    // Se esiste un salvataggio di oggi, riprendi da lì
+    let giocatoOggi = JSON.parse(localStorage.getItem("giocato_" + oggi));
+    if (giocatoOggi && sameForAll) {
+        // ripristina canzone e blocco dallo storage
+        canzoneSelezionata = giocatoOggi.canzone;
+        bloccoSelezionato = giocatoOggi.blocco;
+
+        // costruisci parole in modo robusto
+        paroleBarre = bloccoSelezionato.map(b => (""+b).trim().split(/\s+/).filter(Boolean));
+        paroleVisibili = paroleBarre.map(arr => arr.map(() => false));
+
+        // ricostruisci la sequenza (deterministica) e poi filtra eventuali entry corrotte
+        recomputeSequenza();
+        // se ci sono differenze tra sequenza salvata e quella ricostruita, preferiamo quella ricostruita
+        // ma manteniamo in ogni caso un fallback ai dati salvati (filtrati).
+        sequenzaParole = (giocatoOggi.sequenzaParole || sequenzaParole).filter(
+            e => Array.isArray(e) && e.length === 2 && Number.isInteger(e[0]) && Number.isInteger(e[1])
+        );
+
+        // se la sequenza ricostruita ha lunghezza diversa dal numero di parole, ricomponila definitivamente
+        const totalWords = paroleBarre.reduce((s, arr) => s + arr.length, 0);
+        if (!Array.isArray(sequenzaParole) || sequenzaParole.length !== totalWords) {
+            recomputeSequenza();
+        }
+
+        // ripristina tentativi e stato
+        tentativi = giocatoOggi.tentativi || 1;
+        giocoFinito = giocatoOggi.giocoFinito || false;
+
+        // ricostruisci parole già sbloccate in base a paroleSbloccate (se presente)
+        paroleVisibili = paroleBarre.map(arr => arr.map(() => false));
+        const paroleSbloccateSaved = Number.isInteger(giocatoOggi.paroleSbloccate) ? giocatoOggi.paroleSbloccate : 0;
+        for (let t = 0; t < paroleSbloccateSaved && t < sequenzaParole.length; t++) {
+            const coppia = sequenzaParole[t];
+            if (coppia) {
+                const [i, j] = coppia;
+                if (paroleVisibili[i] && paroleVisibili[i][j] !== undefined)
+                    paroleVisibili[i][j] = true;
+            }
+        }
+
+        // Mostra la frase e aggiorna interfaccia
+        document.getElementById("frase").innerText = generaFrase();
+        document.getElementById("tentativi").innerText = tentativoString(tentativi);
+
+        // Se il gioco è finito, mostra tutto il testo completo
+        if (giocoFinito) {
+            paroleVisibili = paroleBarre.map(arr => arr.map(() => true));
+            document.getElementById("frase").innerText = generaFrase();
+        }
+
+        document.getElementById("message").innerText = giocatoOggi.messaggio || "";
+        return;
+    }
+
+    // Se arrivo qui: nuovo gioco (o modalità random)
+    let indexCanzone, indexBlocco;
+    if (sameForAll) {
+        let seed = hashString(oggi + "_pinguini");
+        indexCanzone = Math.abs(seed) % canzoni.length;
+        canzoneSelezionata = canzoni[indexCanzone];
+        indexBlocco = Math.abs(hashString(oggi + "_blocco")) % canzoneSelezionata.blocchi.length;
+        bloccoSelezionato = canzoneSelezionata.blocchi[indexBlocco];
+    } else {
+        indexCanzone = Math.floor(Math.random() * canzoni.length);
+        canzoneSelezionata = canzoni[indexCanzone];
+        indexBlocco = Math.floor(Math.random() * canzoneSelezionata.blocchi.length);
+        bloccoSelezionato = canzoneSelezionata.blocchi[indexBlocco];
+    }
+
+    // Prepara le parole e la sequenza (split robusto)
+    paroleBarre = bloccoSelezionato.map(b => (""+b).trim().split(/\s+/).filter(Boolean));
+    paroleVisibili = paroleBarre.map(arr => arr.map(() => false));
+
+    // Sequenza parole deterministica (così tutti hanno lo stesso ordine)
+    recomputeSequenza();
+
+    // Sblocca la prima parola (se esiste)
+    if (Array.isArray(sequenzaParole) && sequenzaParole.length > 0) {
+        let [i0, j0] = sequenzaParole[0];
+        if (paroleVisibili[i0] && paroleVisibili[i0][j0] !== undefined) paroleVisibili[i0][j0] = true;
+    } else {
+        console.warn("sequenzaParole vuota: nessuna parola da sbloccare");
+    }
+
+    tentativi = 1;
+    giocoFinito = false;
+
+    document.getElementById("frase").innerText = generaFrase();
+    document.getElementById("tentativi").innerText = tentativoString(tentativi);
+    document.getElementById("message").innerText = "";
+
+    // Salva lo stato iniziale del giorno
+    if (sameForAll) {
+	const sequenzaDaSalvare = (Array.isArray(sequenzaParole) ? sequenzaParole.filter(
+    p => Array.isArray(p) && p.length === 2 && Number.isInteger(p[0]) && Number.isInteger(p[1])
+) : []);
+        localStorage.setItem("giocato_" + oggi, JSON.stringify({
+            canzone: canzoneSelezionata,
+            blocco: bloccoSelezionato,
+            sequenzaParole: sequenzaDaSalvare,
+            paroleSbloccate: 1,
+            tentativi,
+            messaggio: "",
+            giocoFinito: false
+        }));
+    }
+}
+
+
+// Genera frase
+function generaFrase(){return paroleBarre.map((b,i)=>b.map((p,j)=>paroleVisibili[i][j]?p:"█".repeat(p.length)).join(" ")).join("\n\n");}
+function tentativoString(n){return n===1?"Tentativo: 1":"Tentativi: "+n;}
+
+// Aggiorna stats
+function updateStats(vinto){
+    stats.played++; if(vinto){ stats.wins++; if(tentativi<=maxTentativi) stats.guessDistribution[tentativi]=(stats.guessDistribution[tentativi]||0)+1;
+    let oggiDate=oggi; if(stats.lastWinDate){let ieri=new Date(); ieri.setDate(ieri.getDate()-1); let ieriStr=ieri.toISOString().slice(0,10);
+    if(stats.lastWinDate===ieriStr) stats.currentStreak++; else if(stats.lastWinDate!==oggiDate) stats.currentStreak=1;} else stats.currentStreak=1;
+    stats.lastWinDate=oggiDate; if(stats.currentStreak>stats.maxStreak) stats.maxStreak=stats.currentStreak;} else stats.currentStreak=0;
+    localStorage.setItem("pinguini_stats",JSON.stringify(stats));
+}
+
+
+// Check guess
+function checkGuess() {
+    if (giocoFinito) return;
+    let guess = document.getElementById("guess").value.trim().toLowerCase();
+
+    if (guess === canzoneSelezionata.titolo.toLowerCase()) {
+        giocoFinito = true;
+        // mostra tutte le parole
+        paroleVisibili.forEach((b, i) => b.forEach((_, j) => paroleVisibili[i][j] = true));
+        updateStats(true);
+let msg = `Complimenti! Hai indovinato in ${tentativi} ${tentativi === 1 ? "tentativo" : "tentativi"}!`;
+
+// Salva PRIMA di mostrare le stats
+let paroleSbloccate = paroleVisibili.flat().filter(Boolean).length;
+let sequenzaDaSalvare = (Array.isArray(sequenzaParole) ? sequenzaParole.filter(
+    p => Array.isArray(p) && p.length === 2 && Number.isInteger(p[0]) && Number.isInteger(p[1])
+) : []);
+localStorage.setItem("giocato_" + oggi, JSON.stringify({
+    canzone: canzoneSelezionata,
+    blocco: bloccoSelezionato,
+    sequenzaParole: sequenzaDaSalvare,
+    paroleSbloccate,
+    tentativi,
+    messaggio: msg,
+    giocoFinito: true,
+    vinto: true
+}));
+
+document.getElementById("frase").innerText = generaFrase();
+document.getElementById("message").innerText = msg;
+
+// Ora puoi chiamare la modale (dati aggiornati)
+showStatsModal();
+modal.style.display = "flex";
+
+        paroleSbloccate = paroleVisibili.flat().filter(Boolean).length;
+	sequenzaDaSalvare = (Array.isArray(sequenzaParole) ? sequenzaParole.filter(
+    p => Array.isArray(p) && p.length === 2 && Number.isInteger(p[0]) && Number.isInteger(p[1])
+) : []);
+        localStorage.setItem("giocato_" + oggi, JSON.stringify({
+            canzone: canzoneSelezionata,
+            blocco: bloccoSelezionato,
+            sequenzaParole: sequenzaDaSalvare,
+            paroleSbloccate,
+            tentativi,
+            messaggio: msg,
+            giocoFinito: true,
+	    vinto: true
+        }));
+    } else {
+        if (tentativi >= maxTentativi) {
+            giocoFinito = true;
+            // mostra tutte le parole
+            paroleVisibili.forEach((b, i) => b.forEach((_, j) => paroleVisibili[i][j] = true));
+            updateStats(false);
+let msg = `Mi spiace! La canzone era: "${canzoneSelezionata.titolo}"`;
+document.getElementById("frase").innerText = generaFrase();
+document.getElementById("message").innerText = msg;
+
+paroleSbloccate = paroleVisibili.flat().filter(Boolean).length;
+sequenzaDaSalvare = (Array.isArray(sequenzaParole) ? sequenzaParole.filter(
+    p => Array.isArray(p) && p.length === 2 && Number.isInteger(p[0]) && Number.isInteger(p[1])
+) : []);
+
+//Sposta il salvataggio PRIMA della modale
+localStorage.setItem("giocato_" + oggi, JSON.stringify({
+    canzone: canzoneSelezionata,
+    blocco: bloccoSelezionato,
+    sequenzaParole: sequenzaDaSalvare,
+    paroleSbloccate,
+    tentativi,
+    messaggio: msg,
+    giocoFinito: true,
+    vinto: false
+}));
+
+showStatsModal();
+modal.style.display = "flex";
+
+return;
+
+        }
+
+        // errore ma non finito: sblocca la parola successiva
+        tentativi++;
+        document.getElementById("tentativi").innerText = tentativoString(tentativi);
+
+        // Protezione: assicurati che esista la voce in sequenzaParole[tentativi - 1]
+        if (!Array.isArray(sequenzaParole) || !Array.isArray(sequenzaParole[tentativi - 1])) {
+            console.warn("sequenzaParole mancante all'indice", tentativi - 1, "ricostruisco la sequenza", sequenzaParole);
+            recomputeSequenza();
+        }
+
+        if (!Array.isArray(sequenzaParole[tentativi - 1])) {
+            // fallback: sblocca la prima parola non visibile (non crashare)
+            let found = false;
+            for (let ii = 0; ii < paroleVisibili.length && !found; ii++) {
+                for (let jj = 0; jj < paroleVisibili[ii].length && !found; jj++) {
+                    if (!paroleVisibili[ii][jj]) {
+                        paroleVisibili[ii][jj] = true;
+                        found = true;
+                    }
+                }
+            }
+            if (!found) console.error("Nessuna parola disponibile da sbloccare (fallback fallito).");
+        } else {
+            let [i, j] = sequenzaParole[tentativi - 1];
+            if (paroleVisibili[i] && paroleVisibili[i][j] !== undefined) {
+                paroleVisibili[i][j] = true;
+            } else {
+                console.warn("Indice sequenza non valido per paroleVisibili:", i, j);
+                // fallback come sopra
+                let found = false;
+                for (let ii = 0; ii < paroleVisibili.length && !found; ii++) {
+                    for (let jj = 0; jj < paroleVisibili[ii].length && !found; jj++) {
+                        if (!paroleVisibili[ii][jj]) {
+                            paroleVisibili[ii][jj] = true;
+                            found = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        document.getElementById("frase").innerText = generaFrase();
+        document.getElementById("message").innerText = "Sbagliato! Ecco un altro indizio.";
+
+        paroleSbloccate = paroleVisibili.flat().filter(Boolean).length;
+	sequenzaDaSalvare = (Array.isArray(sequenzaParole) ? sequenzaParole.filter(
+    p => Array.isArray(p) && p.length === 2 && Number.isInteger(p[0]) && Number.isInteger(p[1])
+) : []);
+        localStorage.setItem("giocato_" + oggi, JSON.stringify({
+            canzone: canzoneSelezionata,
+            blocco: bloccoSelezionato,
+            sequenzaParole: sequenzaDaSalvare,
+            paroleSbloccate,
+            tentativi,
+            messaggio: document.getElementById("message").innerText,
+            giocoFinito: false
+        }));
+    }
+
+    document.getElementById("guess").value = "";
+}
+
+
+// Imposta la data di oggi nello splash
+const todaySpan = document.getElementById("today");
+const options = { year: 'numeric', month: 'long', day: 'numeric' };
+todaySpan.textContent = new Date().toLocaleDateString("it-IT", options);
+
+// Calcola numero del giorno a partire dal 9 ottobre 2025
+const startDate = new Date("2025-10-09");
+const todayDate = new Date();
+const diffTime = todayDate - startDate;
+const diffDays = Math.floor((todayDate - startDate) / (1000 * 60 * 60 * 24));
+document.getElementById("dayNumber").textContent = `No. ${diffDays}`;
+
+function showStatsModal() {
+    // Prendi i dati del giorno dal localStorage
+    const giocatoOggi = JSON.parse(localStorage.getItem("giocato_" + oggi)) || {};
+    const vinto = giocatoOggi.vinto || false;
+    const tentativiUsati = giocatoOggi.tentativi || 0;
+
+    // Calcola percentuale vittorie
+    const wp = stats.played > 0 ? Math.round((stats.wins / stats.played) * 100) : 0;
+
+    // Aggiorna riepilogo principale
+    document.getElementById("playedNum").textContent = stats.played;
+    document.getElementById("winPerc").textContent = wp + "%";
+    document.getElementById("currentStreakNum").textContent = stats.currentStreak;
+    document.getElementById("maxStreakNum").textContent = stats.maxStreak;
+
+    // Aggiorna distribuzione tentativi
+    const distContainer = document.getElementById("distributionBars");
+    distContainer.innerHTML = ""; // reset
+
+    for(let i = 1; i <= maxTentativi; i++){
+        const count = stats.guessDistribution[i] || 0;
+        const percent = stats.played > 0 ? Math.round((count / stats.played) * 100) : 0;
+
+        const row = document.createElement("div");
+        row.classList.add("distributionRow");
+
+        const label = document.createElement("div");
+        label.classList.add("distributionLabel");
+        label.textContent = i;
+
+        const barContainer = document.createElement("div");
+        barContainer.classList.add("distributionBarContainer");
+
+        const bar = document.createElement("div");
+        bar.classList.add("distributionBar");
+
+        // **Barretta viola solo se ho vinto e questo è il tentativo corretto**
+        if(vinto && i === tentativiUsati) {
+            bar.classList.add("current");
+        }
+
+        // Mostra almeno 1px anche se percentuale = 0 per vedere lo 0
+        bar.style.width = (percent > 0 ? percent : 5) + "%";
+        bar.textContent = count;
+
+        barContainer.appendChild(bar);
+        row.appendChild(label);
+        row.appendChild(barContainer);
+        distContainer.appendChild(row);
+    }
+}
+
+
+</script>
+
+</body>
+</html>
